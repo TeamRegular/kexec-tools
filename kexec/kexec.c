@@ -986,6 +986,7 @@ void usage(void)
 	       "                      to original kernel.\n"
 	       " -s, --kexec-file-syscall Use file based syscall for kexec operation\n"
 	       " -d, --debug           Enable debugging to help spot a failure.\n"
+	       "     --load-hardboot  Load the new kernel and hard boot it.\n"
 	       "\n"
 	       "Supported kernel file types and options: \n");
 	for (i = 0; i < file_types; i++) {
@@ -1367,6 +1368,12 @@ int main(int argc, char *argv[])
 		case OPT_LITE:
 			do_lite = 1;
 			break;
+		case OPT_LOAD_HARDBOOT:
+			do_load = 1;
+			do_exec = 0;
+			do_shutdown = 0;
+			kexec_flags = KEXEC_HARDBOOT;
+			break;
 		default:
 			break;
 		}
@@ -1390,6 +1397,12 @@ int main(int argc, char *argv[])
 		die("Please specify memory range used by kexeced kernel\n"
 		    "to preserve the context of original kernel with \n"
 		    "\"--mem-max\" parameter\n");
+	}
+
+	if (do_load && (kexec_flags & KEXEC_HARDBOOT) && mem_min == 0) {
+		printf("Please specify memory range used by kexeced kernel\n");
+		printf("to avoid being overwritten by on reboot with the\n");
+		die("\"--min-max\" parameter\n");
 	}
 
 	fileind = optind;
