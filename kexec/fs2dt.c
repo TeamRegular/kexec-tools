@@ -236,7 +236,8 @@ static void add_dyn_reconf_usable_mem_property__(int fd)
 						    ranges_size*8);
 				}
 				ranges[rlen++] = cpu_to_be64(loc_base);
-				ranges[rlen++] = cpu_to_be64(loc_end - loc_base);
+				ranges[rlen++] = cpu_to_be64(loc_end
+								- loc_base + 1);
 				rngs_cnt++;
 			}
 		}
@@ -350,7 +351,7 @@ static void add_usable_mem_property(int fd, size_t len)
 					    ranges_size*sizeof(*ranges));
 			}
 			ranges[rlen++] = cpu_to_be64(loc_base);
-			ranges[rlen++] = cpu_to_be64(loc_end - loc_base);
+			ranges[rlen++] = cpu_to_be64(loc_end - loc_base + 1);
 		}
 	}
 
