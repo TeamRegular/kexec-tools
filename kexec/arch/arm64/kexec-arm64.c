@@ -754,7 +754,7 @@ unsigned long phys_to_virt(struct crash_elf_info *UNUSED(elf_info),
 	v = p - arm64_mem.memstart + arm64_mem.page_offset;
 
 	dbgprintf("%s: %016lx -> %016lx\n", __func__, p, v);
-	return p;
+	return v;
 }
 
 void add_segment(struct kexec_info *info, const void *buf, size_t bufsz,
@@ -920,7 +920,7 @@ static int get_memory_ranges_iomem(struct memory_range *array,
 
 		r.type = RANGE_RAM;
 
-		dbgprintf("%s:%d: RAM:  %016llx - %016llx : %s", __func__,
+		dbgprintf("%s:%d: RAM: %016llx - %016llx : %s", __func__,
 			__LINE__, r.start, r.end, str);
 
 		array[(*count)++] = r;

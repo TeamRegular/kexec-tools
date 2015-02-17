@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <libfdt.h>
+#include <stdlib.h>
 
 #include <linux/elf.h>
 
@@ -52,11 +53,7 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 	bool found_header;
 	int i;
 
-	if (info->kexec_flags & KEXEC_ON_CRASH) {
-		fprintf(stderr, "kexec: kdump not yet supported on arm64\n");
-		return -EINVAL;
-	}
-
+	/* Parse the Elf file */
 	result = build_elf_exec_info(kernel_buf, kernel_size, &ehdr, 0);
 
 	if (result < 0) {
@@ -104,6 +101,8 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 			fprintf(stderr, "kexec: creating eflcorehdr failed.\n");
 			goto exit;
 		}
+		/* offset addresses to load vmlinux(elf_exec) in crash memory */
+		modify_ehdr_for_crashdump(&ehdr);
 	}
 
 	result = elf_exec_load(&ehdr, info);
@@ -113,6 +112,11 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 		goto exit;
 	}
 
+	if (info->kexec_flags & KEXEC_ON_CRASH)
+		info->entry = get_crash_entry();
+	else
+		info->entry = (void *)virt_to_phys(ehdr.e_entry);
+
 	dbgprintf("%s: text_offset: %016lx\n", __func__, arm64_mem.text_offset);
 	dbgprintf("%s: image_size:  %016lx\n", __func__, arm64_mem.image_size);
 	dbgprintf("%s: page_offset: %016lx\n", __func__, arm64_mem.page_offset);
@@ -120,7 +124,7 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 	dbgprintf("%s: e_entry:     %016llx -> %016lx\n", __func__,
 		ehdr.e_entry, virt_to_phys(ehdr.e_entry));
 
-	result = arm64_load_other_segments(info, virt_to_phys(ehdr.e_entry),
+	result = arm64_load_other_segments(info, (unsigned long)info->entry,
 		header_option);
 exit:
 	free_elf_info(&ehdr);

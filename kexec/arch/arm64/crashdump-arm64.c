@@ -1,10 +1,26 @@
 /*
- * ARM64 crashdump.
+ * crashdump for arm64
+ *
+ * Copyright (C) Nokia Corporation, 2010.
+ * Author: Mika Westerberg
+ *
+ * Based on x86 implementation
+ * Copyright (C) IBM Corporation, 2005. All rights reserved
+ *
+ * Copyright (c) 2014 Linaro Limited
+ * Author: AKASHI Takahiro <takahiro.akashi@linaro.org>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
  */
 
-#define _GNU_SOURCE
+#define _GNU_SOURCE /* for asprintf */
 
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <linux/elf.h>
 
 #include "kexec.h"
@@ -261,4 +277,25 @@ int load_crashdump_segments(struct kexec_info *info, char **option)
 	dbgprintf("%s:%s\n", __func__, *option);
 
 	return 0;
+}
+
+void modify_ehdr_for_crashdump(struct mem_ehdr *ehdr)
+{
+	struct mem_phdr *phdr;
+	int i;
+
+	ehdr->e_entry += crash_reserved_mem.start;
+
+	for (i = 0; i < ehdr->e_phnum; i++) {
+		phdr = &ehdr->e_phdr[i];
+		if (phdr->p_type != PT_LOAD)
+			continue;
+		phdr->p_paddr +=
+			(-arm64_mem.memstart + crash_reserved_mem.start);
+	}
+}
+
+void *get_crash_entry(void)
+{
+	return (void *)crash_reserved_mem.start + arm64_mem.text_offset;
 }
