@@ -269,7 +269,9 @@ int load_crashdump_segments(struct kexec_info *info, char **option)
 		crash_reserved_mem.start, crash_reserved_mem.end,
 		-1, 0);
 
-	err = asprintf(option, " elfcorehdr=%#lx@%#lx", bufsz, elfcorehdr);
+	err = asprintf(option, " elfcorehdr=%#lx@%#lx mem=%#llx",
+			bufsz, elfcorehdr,
+			crash_reserved_mem.end - crash_reserved_mem.start + 1);
 
 	if (err == -1)
 		return err;
