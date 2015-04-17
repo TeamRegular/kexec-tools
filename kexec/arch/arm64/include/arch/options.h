@@ -5,7 +5,8 @@
 #define OPT_DTB			((OPT_MAX)+1)
 #define OPT_INITRD		((OPT_MAX)+2)
 #define OPT_PORT		((OPT_MAX)+3)
-#define OPT_ARCH_MAX		((OPT_MAX)+4)
+#define OPT_REUSE_CMDLINE	((OPT_MAX)+4)
+#define OPT_ARCH_MAX		((OPT_MAX)+5)
 
 #define KEXEC_ARCH_OPTIONS \
 	KEXEC_OPTIONS \
@@ -15,6 +16,7 @@
 	{ "initrd",       1, NULL, OPT_INITRD }, \
 	{ "port",         1, NULL, OPT_PORT }, \
 	{ "ramdisk",      1, NULL, OPT_INITRD }, \
+	{ "reuse-cmdline", 0, NULL, OPT_REUSE_CMDLINE }, \
 
 #define KEXEC_ARCH_OPT_STR KEXEC_OPT_STR /* Only accept long arch options. */
 #define KEXEC_ALL_OPTIONS KEXEC_ARCH_OPTIONS
@@ -26,7 +28,8 @@ static const char arm64_opts_usage[] __attribute__ ((unused)) =
 "     --dtb=FILE            Use FILE as the device tree blob.\n"
 "     --initrd=FILE         Use FILE as the kernel initial ramdisk.\n"
 "     --port=ADDRESS        Purgatory output to port ADDRESS.\n"
-"     --ramdisk=FILE        Use FILE as the kernel initial ramdisk.\n";
+"     --ramdisk=FILE        Use FILE as the kernel initial ramdisk.\n"
+"     --reuse-cmdline       Use command line arg of primary kernel.\n";
 
 struct arm64_opts {
 	const char *command_line;

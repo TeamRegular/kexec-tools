@@ -75,13 +75,18 @@ int arch_process_options(int argc, char **argv)
 		{ 0 }
 	};
 	int opt;
+	const char *append = NULL;
+	char *tmp_cmdline = NULL;
 
 	for (opt = 0; opt != -1; ) {
 		opt = getopt_long(argc, argv, short_options, options, 0);
 
 		switch (opt) {
 		case OPT_APPEND:
-			arm64_opts.command_line = optarg;
+			append = optarg;
+			break;
+		case OPT_REUSE_CMDLINE:
+			tmp_cmdline = get_command_line();
 			break;
 		case OPT_DTB:
 			arm64_opts.dtb = optarg;
@@ -97,6 +102,7 @@ int arch_process_options(int argc, char **argv)
 		}
 	}
 
+	arm64_opts.command_line = concat_cmdline(tmp_cmdline, append);
 	kexec_debug = 1; // FIXME: for debugging only.
 
 	dbgprintf("%s:%d: command_line: %s\n", __func__, __LINE__,
