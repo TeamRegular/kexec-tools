@@ -69,6 +69,10 @@ dist				+= kexec/fs2dt.c kexec/fs2dt.h
 $(ARCH)_FS2DT			=
 KEXEC_SRCS			+= $($(ARCH)_FS2DT)
 
+dist				+= kexec/dt-ops.c kexec/dt-ops.h
+$(ARCH)_DT_OPS		=
+KEXEC_SRCS			+= $($(ARCH)_DT_OPS)
+
 include $(srcdir)/kexec/arch/alpha/Makefile
 include $(srcdir)/kexec/arch/arm/Makefile
 include $(srcdir)/kexec/arch/i386/Makefile
