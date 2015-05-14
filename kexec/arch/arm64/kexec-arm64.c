@@ -97,6 +97,9 @@ int arch_process_options(int argc, char **argv)
 		case OPT_PORT:
 			arm64_opts.port = strtoull(optarg, NULL, 0);
 			break;
+		case OPT_PAGE_OFFSET:
+			arm64_opts.page_offset = strtoull(optarg, NULL, 0);
+			break;
 		default:
 			break; /* Ignore core and unknown options. */
 		}

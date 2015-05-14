@@ -17,6 +17,8 @@
 #define BOOT_BLOCK_LAST_COMP_VERSION 16
 #define COMMAND_LINE_SIZE 512
 
+#define ARM64_DEFAULT_PAGE_OFFSET 0xfffffe0000000000
+
 int elf_arm64_probe(const char *kernel_buf, off_t kernel_size);
 int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 	off_t kernel_size, struct kexec_info *info);

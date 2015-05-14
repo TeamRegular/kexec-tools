@@ -4,9 +4,10 @@
 #define OPT_APPEND		((OPT_MAX)+0)
 #define OPT_DTB			((OPT_MAX)+1)
 #define OPT_INITRD		((OPT_MAX)+2)
-#define OPT_PORT		((OPT_MAX)+3)
-#define OPT_REUSE_CMDLINE	((OPT_MAX)+4)
-#define OPT_ARCH_MAX		((OPT_MAX)+5)
+#define OPT_PAGE_OFFSET		((OPT_MAX)+3)
+#define OPT_PORT		((OPT_MAX)+4)
+#define OPT_REUSE_CMDLINE	((OPT_MAX)+5)
+#define OPT_ARCH_MAX		((OPT_MAX)+6)
 
 #define KEXEC_ARCH_OPTIONS \
 	KEXEC_OPTIONS \
@@ -14,6 +15,7 @@
 	{ "command-line", 1, NULL, OPT_APPEND }, \
 	{ "dtb",          1, NULL, OPT_DTB }, \
 	{ "initrd",       1, NULL, OPT_INITRD }, \
+	{ "page-offset",  1, NULL, OPT_PAGE_OFFSET }, \
 	{ "port",         1, NULL, OPT_PORT }, \
 	{ "ramdisk",      1, NULL, OPT_INITRD }, \
 	{ "reuse-cmdline", 0, NULL, OPT_REUSE_CMDLINE }, \
@@ -35,6 +37,7 @@ struct arm64_opts {
 	const char *command_line;
 	const char *dtb;
 	const char *initrd;
+	uint64_t page_offset;
 	uint64_t port;
 };
 
