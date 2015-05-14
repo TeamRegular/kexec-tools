@@ -10,6 +10,7 @@
 #include <libfdt.h>
 #include <stdlib.h>
 
+#include "crashdump-arm64.h"
 #include "dt-ops.h"
 #include "image-header.h"
 #include "kexec-arm64.h"
@@ -96,7 +97,15 @@ int image_arm64_load(int argc, char **argv, const char *kernel_buf,
 
 	arm64_mem.page_offset = get_kernel_page_offset();
 
-	if (!info->entry) {
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		result = load_crashdump_segments(info, &header_option);
+
+		if (result) {
+			fprintf(stderr, "kexec: load crashdump segments failed.\n");
+			return -1;
+		}
+		info->entry = get_crash_entry();
+	} else if (!info->entry) {
 		result = parse_iomem_single("Kernel code\n", &info->entry, NULL);
 
 		if (result) {
@@ -109,7 +118,8 @@ int image_arm64_load(int argc, char **argv, const char *kernel_buf,
 	add_segment_phys_virt(info, kernel_buf, kernel_size,
 			info->entry, kernel_size, 0);
 
-	result = arm64_load_other_segments(info, (unsigned long)info->entry);
+	result = arm64_load_other_segments(info, (unsigned long)info->entry,
+		header_option);
 
 	if (header_option)
 		free(header_option);
