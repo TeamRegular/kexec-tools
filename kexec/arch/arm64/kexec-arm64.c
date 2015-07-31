@@ -587,11 +587,10 @@ int arm64_load_other_segments(struct kexec_info *info,
 {
 	int result;
 	uint64_t dtb_base;
+	unsigned long hole_min, hole_max;
 	uint64_t purgatory_sink;
 	struct mem_ehdr ehdr;
-	unsigned long dtb_max;
 	char *initrd_buf = NULL;
-	unsigned long purgatory_base;
 	struct dtb dtb_1 = {.name = "dtb_1"};
 	struct dtb dtb_2 = {.name = "dtb_2"};
 	char command_line[COMMAND_LINE_SIZE] = "";
@@ -645,24 +644,15 @@ int arm64_load_other_segments(struct kexec_info *info,
 	 * to the DTB size for any DTB growth.
 	 */
 
-	dtb_max = dtb_2.size + 2 * 1024;
-
-	dtb_base = locate_hole(info, dtb_max, 128UL * 1024,
-		arm64_mem.memstart + arm64_mem.text_offset
-			+ arm64_mem.image_size,
-		_ALIGN_UP(arm64_mem.memstart + arm64_mem.text_offset,
-			512UL * 1024 * 1024),
-		1);
-
-	dbgprintf("dtb:    base %lx, size %lxh (%ld)\n", dtb_base, dtb_2.size,
-		dtb_2.size);
-
-	if (dtb_base == ULONG_MAX)
-		return -ENOMEM;
-
-	purgatory_base = dtb_base + dtb_2.size;
-	initrd_base = 0;
-	initrd_size = 0;
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		hole_min = crash_reserved_mem.start + arm64_mem.text_offset
+				+ arm64_mem.image_size;
+		hole_max = crash_reserved_mem.end;
+	} else {
+		hole_min = arm64_mem.memstart + arm64_mem.text_offset
+				+ arm64_mem.image_size;
+		hole_max = ULONG_MAX;
+	}
 
 	if (arm64_opts.initrd) {
 		initrd_buf = slurp_file(arm64_opts.initrd, &initrd_size);
@@ -673,8 +663,9 @@ int arm64_load_other_segments(struct kexec_info *info,
 			/* Put the initrd after the DTB with an alignment of
 			 * page size. */
 
-			initrd_base = locate_hole(info, initrd_size, 0,
-				dtb_base + dtb_max, -1, 1);
+			initrd_base = add_buffer_phys_virt(info, initrd_buf,
+				initrd_size, initrd_size, 0,
+				hole_min, hole_max, 1, 0);
 
 			dbgprintf("initrd: base %lx, size %lxh (%ld)\n",
 				initrd_base, initrd_size, initrd_size);
@@ -688,22 +679,17 @@ int arm64_load_other_segments(struct kexec_info *info,
 
 			if (result)
 				return result;
-
-			purgatory_base = initrd_base + initrd_size;
 		}
 	}
 
-	if (dtb_2.size > dtb_max) {
-		fprintf(stderr, "%s: Error: Too many DTB mods.\n", __func__);
-		return -EINVAL;
-	}
+	dtb_base = add_buffer_phys_virt(info, dtb_2.buf, dtb_2.size, dtb_2.size,
+			128UL * 1024, hole_min, hole_max, 1, 0);
 
-	add_segment_phys_virt(info, dtb_2.buf, dtb_2.size, dtb_base, dtb_2.size,
-		0);
+	dbgprintf("dtb:    base %lx, size %lxh (%ld)\n", dtb_base, dtb_2.size,
+		dtb_2.size);
 
-	if (arm64_opts.initrd)
-		add_segment_phys_virt(info, initrd_buf, initrd_size,
-			initrd_base, initrd_size, 0);
+	if (dtb_base == ULONG_MAX)
+		return -ENOMEM;
 
 	result = build_elf_rel_info(purgatory, purgatory_size, &ehdr, 0);
 
@@ -714,7 +700,7 @@ int arm64_load_other_segments(struct kexec_info *info,
 	}
 
 	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
-		purgatory_base, ULONG_MAX, 1, 0);
+		hole_min, hole_max, 1, 0);
 
 	info->entry = (void *)elf_rel_get_addr(&info->rhdr, "purgatory_start");
 
