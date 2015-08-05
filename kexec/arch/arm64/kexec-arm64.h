@@ -47,6 +47,6 @@ extern struct arm64_mem arm64_mem;
 
 int arm64_process_image_header(const struct arm64_image_header *h);
 int arm64_load_other_segments(struct kexec_info *info,
-	uint64_t kernel_entry);
+	uint64_t kernel_entry, char *option);
 
 #endif

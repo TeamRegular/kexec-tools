@@ -30,6 +30,16 @@ struct memory_ranges usablemem_rgns = {
 	.ranges = &crash_reserved_mem,
 };
 
+static struct crash_elf_info elf_info = {
+	.class		= ELFCLASS64,
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
+	.data		= ELFDATA2LSB,
+#else
+	.data		= ELFDATA2MSB,
+#endif
+	.machine	= EM_AARCH64,
+};
+
 int is_crashkernel_mem_reserved(void)
 {
 	uint64_t start, end;
@@ -197,4 +207,58 @@ static void dump_crash_ranges(void)
 		dbgprintf("%s: RAM:    %016llx - %016llx (%ld MiB)\n", __func__,
 			  r->start, r->end, range_size(r));
 	}
+}
+
+/*
+ * load_crashdump_segments() - create elf core header for /proc/vmcore
+ * @info: kexec info structure
+ * @option: To be appended to kernel command line
+ *
+ * This function loads additional segments which are needed for the dump
+ * capture kernel. It also updates kernel command line passed in
+ * @command_line_extra to have the correct parameters for the dump capture
+ * kernel.
+ *
+ * Return %0 in case of success and %-1 in case of error.
+ */
+
+int load_crashdump_segments(struct kexec_info *info, char **option)
+{
+	unsigned long elfcorehdr;
+	unsigned long bufsz;
+	void *buf;
+	int err;
+
+	/*
+	 * First fetch all the memory (RAM) ranges that we are going to
+	 * pass to the crashdump kernel during panic.
+	 */
+
+	err = crash_get_memory_ranges();
+
+	if (err)
+		return err;
+
+	dump_crash_ranges();
+
+	elf_info.page_offset = arm64_mem.page_offset;
+
+	err = crash_create_elf64_headers(info, &elf_info, crashmem_rgns.ranges,
+		crashmem_rgns.size, &buf, &bufsz, ELF_CORE_HEADER_ALIGN);
+
+	if (err)
+		return err;
+
+	elfcorehdr = add_buffer_phys_virt(info, buf, bufsz, bufsz, 0,
+		crash_reserved_mem.start, crash_reserved_mem.end,
+		-1, 0);
+
+	err = asprintf(option, " elfcorehdr=%#lx@%#lx", bufsz, elfcorehdr);
+
+	if (err == -1)
+		return err;
+
+	dbgprintf("%s:%s\n", __func__, *option);
+
+	return 0;
 }

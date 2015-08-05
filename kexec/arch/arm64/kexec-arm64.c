@@ -583,7 +583,7 @@ static uint64_t read_sink(const char *command_line)
  */
 
 int arm64_load_other_segments(struct kexec_info *info,
-	uint64_t kernel_entry)
+	uint64_t kernel_entry, char *option)
 {
 	int result;
 	uint64_t dtb_base;
@@ -596,14 +596,19 @@ int arm64_load_other_segments(struct kexec_info *info,
 	struct dtb dtb_2 = {.name = "dtb_2"};
 	char command_line[COMMAND_LINE_SIZE] = "";
 
+	dbgprintf("%s:%d: add '%s' to command line\n", __func__, __LINE__,
+		option);
+
 	if (arm64_opts.command_line) {
 		strncpy(command_line, arm64_opts.command_line,
 			sizeof(command_line));
 		command_line[sizeof(command_line) - 1] = 0;
 	}
 
-	purgatory_sink = read_sink(command_line);
+	if (option && option[0])
+		strcat(command_line, option);
 
+	purgatory_sink = read_sink(command_line);
 	dbgprintf("%s:%d: purgatory sink: 0x%" PRIx64 "\n", __func__, __LINE__,
 		purgatory_sink);
 

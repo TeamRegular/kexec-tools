@@ -46,6 +46,7 @@ on_exit:
 int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 	off_t kernel_size, struct kexec_info *info)
 {
+	char *header_option = NULL;
 	int result;
 	struct mem_ehdr ehdr;
 	bool found_header;
@@ -95,6 +96,16 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 		goto exit;
 	}
 
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		/* allocate and initialize elf core header */
+		result = load_crashdump_segments(info, &header_option);
+
+		if (result) {
+			fprintf(stderr, "kexec: creating eflcorehdr failed.\n");
+			goto exit;
+		}
+	}
+
 	result = elf_exec_load(&ehdr, info);
 
 	if (result) {
@@ -109,9 +120,12 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 	dbgprintf("%s: e_entry:     %016llx -> %016lx\n", __func__,
 		ehdr.e_entry, virt_to_phys(ehdr.e_entry));
 
-	result = arm64_load_other_segments(info, virt_to_phys(ehdr.e_entry));
+	result = arm64_load_other_segments(info, virt_to_phys(ehdr.e_entry),
+		header_option);
 exit:
 	free_elf_info(&ehdr);
+	if (header_option)
+		free(header_option);
 	return result;
 }
 
