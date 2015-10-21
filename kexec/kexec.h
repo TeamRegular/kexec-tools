@@ -165,6 +165,8 @@ struct kexec_info {
 	int initrd_fd;
 	char *command_line;
 	int command_line_len;
+
+	int kexec_lite;
 };
 
 struct arch_map_entry {
@@ -218,6 +220,7 @@ extern int file_types;
 #define OPT_TYPE		't'
 #define OPT_PANIC		'p'
 #define OPT_KEXEC_FILE_SYSCALL	's'
+#define OPT_LITE		'i'
 #define OPT_MEM_MIN             256
 #define OPT_MEM_MAX             257
 #define OPT_REUSE_INITRD	258
@@ -243,6 +246,7 @@ extern int file_types;
 	{ "mem-max",		1, 0, OPT_MEM_MAX }, \
 	{ "reuseinitrd",	0, 0, OPT_REUSE_INITRD }, \
 	{ "kexec-file-syscall",	0, 0, OPT_KEXEC_FILE_SYSCALL }, \
+	{ "lite",		0, 0, OPT_LITE }, \
 	{ "debug",		0, 0, OPT_DEBUG }, \
 
 #define KEXEC_OPT_STR "h?vdfxyluet:ps"

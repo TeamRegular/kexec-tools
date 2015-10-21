@@ -644,6 +644,15 @@ static void update_purgatory(struct kexec_info *info)
 		return;
 	}
 	arch_update_purgatory(info);
+
+	if (info->kexec_lite) {
+		unsigned int tmp = 1;
+
+		elf_rel_set_symbol(&info->rhdr, "kexec_lite", &tmp,
+			sizeof(tmp));
+		return;
+	}
+
 	memset(region, 0, sizeof(region));
 	sha256_starts(&ctx);
 	/* Compute a hash of the loaded kernel */
@@ -683,7 +692,7 @@ static void update_purgatory(struct kexec_info *info)
  *	Load the new kernel
  */
 static int my_load(const char *type, int fileind, int argc, char **argv,
-		   unsigned long kexec_flags, void *entry)
+		   unsigned long kexec_flags, int kexec_lite, void *entry)
 {
 	char *kernel;
 	char *kernel_buf;
@@ -696,6 +705,7 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 
 	memset(&info, 0, sizeof(info));
 	info.kexec_flags = kexec_flags;
+	info.kexec_lite = kexec_lite;
 
 	result = 0;
 	if (argc - fileind <= 0) {
@@ -945,6 +955,7 @@ void usage(void)
 	       " -v, --version        Print the version of kexec.\n"
 	       " -f, --force          Force an immediate kexec,\n"
 	       "                      don't call shutdown.\n"
+	       " -i, --lite           Fast reboot, no memory integrity checks.\n"
 	       " -x, --no-ifdown      Don't bring down network interfaces.\n"
 	       " -y, --no-sync        Don't sync filesystems before kexec.\n"
 	       " -l, --load           Load the new kernel into the\n"
@@ -1204,6 +1215,7 @@ int main(int argc, char *argv[])
 	int do_unload = 0;
 	int do_reuse_initrd = 0;
 	int do_kexec_file_syscall = 0;
+	int do_lite = 0;
 	void *entry = 0;
 	char *type = 0;
 	char *endptr;
@@ -1345,6 +1357,9 @@ int main(int argc, char *argv[])
 		case OPT_KEXEC_FILE_SYSCALL:
 			/* We already parsed it. Nothing to do. */
 			break;
+		case OPT_LITE:
+			do_lite = 1;
+			break;
 		default:
 			break;
 		}
@@ -1405,7 +1420,7 @@ int main(int argc, char *argv[])
 						 kexec_file_flags);
 		else
 			result = my_load(type, fileind, argc, argv,
-						kexec_flags, entry);
+						kexec_flags, do_lite, entry);
 	}
 	/* Don't shutdown unless there is something to reboot to! */
 	if ((result == 0) && (do_shutdown || do_exec) && !kexec_loaded()) {
