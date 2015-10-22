@@ -10,6 +10,7 @@ arm64_CPPFLAGS += -I $(srcdir)/kexec/
 arm64_KEXEC_SRCS += \
 	kexec/arch/arm64/kexec-arm64.c \
 	kexec/arch/arm64/kexec-image-arm64.c \
+	kexec/arch/arm64/kexec-gzip-image-arm64.c \
 	kexec/arch/arm64/kexec-elf-arm64.c \
 	kexec/arch/arm64/crashdump-arm64.c
 

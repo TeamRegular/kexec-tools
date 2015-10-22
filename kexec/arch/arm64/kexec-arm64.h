@@ -29,6 +29,11 @@ int image_arm64_load(int argc, char **argv, const char *kernel_buf,
 	off_t kernel_size, struct kexec_info *info);
 void image_arm64_usage(void);
 
+int gzip_image_arm64_probe(const char *kernel_buf, off_t kernel_size);
+int gzip_image_arm64_load(int argc, char **argv, const char *kernel_buf,
+	off_t kernel_size, struct kexec_info *info);
+void gzip_image_arm64_usage(void);
+
 off_t initrd_base;
 off_t initrd_size;
 
