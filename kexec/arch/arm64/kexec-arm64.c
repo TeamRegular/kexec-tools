@@ -984,6 +984,8 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 # define R_AARCH64_CALL26 283
 #endif
 
+	uint64_t *loc64;
+	uint32_t *loc32;
 	uint64_t *location = (uint64_t *)ptr;
 	uint64_t data = *location;
 	const char *type = NULL;
@@ -991,33 +993,42 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 	switch(r_type) {
 	case R_AARCH64_ABS64:
 		type = "ABS64";
-		*location += value;
+		loc64 = ptr;
+		*loc64 = cpu_to_elf64(ehdr, elf64_to_cpu(ehdr, *loc64) + value);
 		break;
 	case R_AARCH64_LD_PREL_LO19:
 		type = "LD_PREL_LO19";
-		*location += ((value - address) << 3) & 0xffffe0;
+		loc32 = ptr;
+		*loc32 = cpu_to_le32(le32_to_cpu(*loc32)
+			+ (((value - address) << 3) & 0xffffe0));
 		break;
 	case R_AARCH64_ADR_PREL_LO21:
 		if (value & 3)
 			die("%s: ERROR Unaligned value: %lx\n", __func__,
 				value);
 		type = "ADR_PREL_LO21";
-		*location += ((value - address) << 3) & 0xffffe0;
+		loc32 = ptr;
+		*loc32 = cpu_to_le32(le32_to_cpu(*loc32)
+			+ (((value - address) << 3) & 0xffffe0));
 		break;
 	case R_AARCH64_JUMP26:
 		type = "JUMP26";
-		*location += ((value - address) >> 2) & 0x3ffffff;
+		loc32 = ptr;
+		*loc32 = cpu_to_le32(le32_to_cpu(*loc32)
+			+ (((value - address) >> 2) & 0x3ffffff));
 		break;
 	case R_AARCH64_CALL26:
 		type = "CALL26";
-		*location += ((value - address) >> 2) & 0x3ffffff;
+		loc32 = ptr;
+		*loc32 = cpu_to_le32(le32_to_cpu(*loc32)
+			+ (((value - address) >> 2) & 0x3ffffff));
 		break;
 	default:
 		die("%s: ERROR Unknown type: %lu\n", __func__, r_type);
 		break;
 	}
 
-	dbgprintf("%s: %s %lx->%lx\n", __func__, type, data, *location);
+	dbgprintf("%s: %s %016lx->%016lx\n", __func__, type, data, *location);
 }
 
 void arch_reuse_initrd(void)
