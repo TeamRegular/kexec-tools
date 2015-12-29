@@ -52,7 +52,11 @@ static unsigned long long get_kernel_text_sym(void)
 	}
 
 	while(fgets(line, sizeof(line), fp) != NULL) {
+#if __ANDROID__
+		if (sscanf(line, "%llx %c %s", &vaddr, &type, sym) != 3)
+#else
 		if (sscanf(line, "%Lx %c %s", &vaddr, &type, sym) != 3)
+#endif
 			continue;
 		if (strcmp(sym, text) == 0) {
 			dbgprintf("kernel symbol %s vaddr = %16llx\n", text, vaddr);
