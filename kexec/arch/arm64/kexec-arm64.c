@@ -663,9 +663,15 @@ int arm64_load_other_segments(struct kexec_info *info,
 			/* Put the initrd after the DTB with an alignment of
 			 * page size. */
 
+#if 1
+			initrd_base = 0x02700000; // from lk/project/msm8994.mk
+			add_segment_phys_virt(info, initrd_buf,
+				initrd_size, initrd_base, initrd_size, 0);
+#else
 			initrd_base = add_buffer_phys_virt(info, initrd_buf,
 				initrd_size, initrd_size, 0,
 				hole_min, hole_max, 1, 0);
+#endif
 
 			dbgprintf("initrd: base %lx, size %lxh (%ld)\n",
 				initrd_base, initrd_size, initrd_size);
@@ -682,14 +688,22 @@ int arm64_load_other_segments(struct kexec_info *info,
 		}
 	}
 
+#if 1
+	dtb_base = 0x02500000; // from lk/project/msm8994.mk
+	add_segment_phys_virt(info, dtb_2.buf, dtb_2.size,
+		dtb_base, dtb_2.size, 0);
+#else
 	dtb_base = add_buffer_phys_virt(info, dtb_2.buf, dtb_2.size, dtb_2.size,
 			128UL * 1024, hole_min, hole_max, 1, 0);
+#endif
 
 	dbgprintf("dtb:    base %lx, size %lxh (%ld)\n", dtb_base, dtb_2.size,
 		dtb_2.size);
 
 	if (dtb_base == ULONG_MAX)
 		return -ENOMEM;
+
+#if 0
 
 	result = build_elf_rel_info(purgatory, purgatory_size, &ehdr, 0);
 
@@ -712,6 +726,8 @@ int arm64_load_other_segments(struct kexec_info *info,
 
 	elf_rel_set_symbol(&info->rhdr, "arm64_dtb_addr", &dtb_base,
 		sizeof(dtb_base));
+
+#endif
 
 	return 0;
 }
